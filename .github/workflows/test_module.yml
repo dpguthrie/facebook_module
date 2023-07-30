@@ -30,9 +30,10 @@ jobs:
         run: |
           json=$(dbtc list-environment-variables -p ${{ matrix.project_id }})
           env_var_id=$(echo "$json" | jq -r ".data.variables[\"$ENV_VAR_NAME\"][\"$ENV_NAME\"].id")
-          dbtc update-environment-variables \
+          var=$(dbtc update-environment-variables \
             -p "${{ matrix.project_id }}" \
-            -d '{"project_id": '"${{ matrix.project_id }}"',"env_vars": {"'"$env_var_id"'": "'"$GIT_SHA"'","ids":['"$env_var_id"'],"name":"'"$ENV_VAR_NAME"'"}}'
+            -d '{"project_id": '"${{ matrix.project_id }}"',"env_vars": {"'"$env_var_id"'": "'"$GIT_SHA"'","ids":['"$env_var_id"'],"name":"'"$ENV_VAR_NAME"'"}}')
+          echo $var
 
       - name: Trigger CI Job
         run: |
@@ -41,7 +42,7 @@ jobs:
           so="dbt_cloud_pr_"$JOB_ID"_"$PULL_REQUEST_ID
           run=$(dbtc trigger-job \
             --job-id="$job_id" \
-            --payload='{"cause":"Checking Facebook changes","schema_override":"'"$so"'"}'
+            --payload='{"cause":"Checking Facebook changes","schema_override":"'"$so"'"}')
           is_success=$(echo "$run" | jq -r '.data.is_success')
           if [ "$is_success" = "true" ]; then
             exit 0
