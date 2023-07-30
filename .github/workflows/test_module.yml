@@ -24,24 +24,25 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install dbtc==0.5.1
+          pip install dbtc==0.5.2
 
       - name: Update Env Var
         run: |
           json=$(dbtc list-environment-variables -p ${{ matrix.project_id }})
           env_var_id=$(echo "$json" | jq -r ".data.variables[\"$ENV_VAR_NAME\"][\"$ENV_NAME\"].id")
-          dbtc update-environment-variables \
+          update_env_var_json=$(dbtc update-environment-variables \
             -p "${{ matrix.project_id }}" \
-            -d '{"project_id": "'"${{ matrix.project_id }}"'","env_vars": {"'"$env_var_id"'": "'"$GIT_SHA"'","ids":['"$env_var_id"'],"name":"'"$ENV_VAR_NAME"'","account_id"}}'
+            -d '{"env_vars": {"'"$env_var_id"'": "'"$GIT_SHA"'","ids":['"$env_var_id"'],"name":"'"$ENV_VAR_NAME"'"}}')
+          echo $update_env_var_json
 
       - name: Trigger CI Job
         run: |
           jobs=$(dbtc list-jobs -p ${{ matrix.project_id }})
           job_id=$(echo "$jobs" | jq '.data | map(select(.job_type == "ci")) | .[0].id')
-          so="dbt_cloud_pr_"$JOB_ID"_"$PULL_REQUEST_ID
+          so="dbt_cloud_pr_"$job_id"_"$PULL_REQUEST_ID"_"${{ matrix.project_id }}
           run=$(dbtc trigger-job \
             --job-id="$job_id" \
-            --payload='{"cause":"Checking Facebook changes","schema_override":"'"$so"'"}'
+            --payload='{"cause":"Checking Facebook changes","schema_override":"'"$so"'"}')
           is_success=$(echo "$run" | jq -r '.data.is_success')
           if [ "$is_success" = "true" ]; then
             exit 0
