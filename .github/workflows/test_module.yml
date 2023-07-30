@@ -1,0 +1,51 @@
+name: Test Module against Customer Repos
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test_module:
+    strategy:
+      matrix:
+        project_id: [88168]
+    runs-on: ubuntu-latest
+    env:
+      DBT_CLOUD_SERVICE_TOKEN: ${{ secrets.DBT_CLOUD_SERVICE_TOKEN }}
+      DBT_CLOUD_ACCOUNT_ID: 43786
+      GIT_SHA: ${{ github.event.pull_request.head.sha }}
+      PULL_REQUEST_ID: ${{ github.event.number }}
+      ENV_VAR_NAME: "DBT_ENV_FB_REVISION"
+      ENV_NAME: "CI"
+    steps:
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.11.x"
+
+      - name: Install Dependencies
+        run: |
+          pip install dbtc==0.5.1
+
+      - name: Update Env Var
+        run: |
+          json=$(dbtc list-environment-variables -p "${{ matrix.project_id }}")
+          env_var_id=$(echo "$json" | jq -r ".data.variables[\"$ENV_VAR_NAME\"][\"$ENV_NAME\"].id")
+          dbtc update-environment-variables \
+            -p "${{ matrix.project_id }}" \
+            -d '{"env_vars": {'"$env_var_id"': "'"$GIT_SHA"'","ids":['"$env_var_id"'],"name":"'"$ENV_VAR_NAME"'"}}'
+
+      - name: Trigger CI Job
+        run: |
+          jobs=$(dbtc list-jobs -p "${{ matrix.project_id }}")
+          job_id=$(echo "$jobs" | jq '.data | map(select(.job_type == "ci")) | .[0].id')
+          so="dbt_cloud_pr_"$JOB_ID"_"$PULL_REQUEST_ID
+          run=$(dbtc trigger-job \
+            --job-id="$job_id" \
+            --payload='{"cause":"Checking Facebook changes","schema_override":"'"$so"'"}'
+          is_success=$(echo "$run" | jq -r '.data.is_success')
+          if [ "$is_success" = "true" ]; then
+            exit 0
+          else
+            echo $run
+            exit 1
+          fi
