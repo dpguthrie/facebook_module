@@ -24,16 +24,16 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install dbtc==0.5.1
+          pip install dbtc==0.5.2
 
       - name: Update Env Var
         run: |
           json=$(dbtc list-environment-variables -p ${{ matrix.project_id }})
           env_var_id=$(echo "$json" | jq -r ".data.variables[\"$ENV_VAR_NAME\"][\"$ENV_NAME\"].id")
-          var=$(dbtc update-environment-variables \
+          update_json=$(dbtc update-environment-variables \
             -p "${{ matrix.project_id }}" \
-            -d '{"project_id": '"${{ matrix.project_id }}"',"env_vars": {"'"$env_var_id"'": "'"$GIT_SHA"'","ids":['"$env_var_id"'],"name":"'"$ENV_VAR_NAME"'"}}')
-          echo $var
+            -d '{"env_vars": {"'"$env_var_id"'": "'"$GIT_SHA"'","ids":['"$env_var_id"'],"name":"'"$ENV_VAR_NAME"'"}}')
+          echo $update_json
 
       - name: Trigger CI Job
         run: |
