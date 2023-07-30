@@ -28,15 +28,15 @@ jobs:
 
       - name: Update Env Var
         run: |
-          json=$(dbtc list-environment-variables -p "${{ matrix.project_id }}")
+          json=$(dbtc list-environment-variables -p ${{ matrix.project_id }})
           env_var_id=$(echo "$json" | jq -r ".data.variables[\"$ENV_VAR_NAME\"][\"$ENV_NAME\"].id")
           dbtc update-environment-variables \
             -p "${{ matrix.project_id }}" \
-            -d '{"env_vars": {"'"$env_var_id"'": "'"$GIT_SHA"'","ids":['"$env_var_id"'],"name":"'"$ENV_VAR_NAME"'"}}'
+            -d '{"project_id": "'"${{ matrix.project_id }}"'","env_vars": {"'"$env_var_id"'": "'"$GIT_SHA"'","ids":['"$env_var_id"'],"name":"'"$ENV_VAR_NAME"'","account_id"}}'
 
       - name: Trigger CI Job
         run: |
-          jobs=$(dbtc list-jobs -p "${{ matrix.project_id }}")
+          jobs=$(dbtc list-jobs -p ${{ matrix.project_id }})
           job_id=$(echo "$jobs" | jq '.data | map(select(.job_type == "ci")) | .[0].id')
           so="dbt_cloud_pr_"$JOB_ID"_"$PULL_REQUEST_ID
           run=$(dbtc trigger-job \
