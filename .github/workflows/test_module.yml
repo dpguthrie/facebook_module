@@ -39,7 +39,7 @@ jobs:
         run: |
           jobs=$(dbtc list-jobs -p ${{ matrix.project_id }})
           job_id=$(echo "$jobs" | jq '.data | map(select(.job_type == "ci")) | .[0].id')
-          so="dbt_cloud_pr_"$job_id"_"$PULL_REQUEST_ID"_"${{ matrix.project_id }}"
+          so="dbt_cloud_pr_"$job_id"_"$PULL_REQUEST_ID"_"${{ matrix.project_id }}
           run=$(dbtc trigger-job \
             --job-id="$job_id" \
             --payload='{"cause":"Checking Facebook changes","schema_override":"'"$so"'"}')
