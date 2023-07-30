@@ -32,7 +32,7 @@ jobs:
           env_var_id=$(echo "$json" | jq -r ".data.variables[\"$ENV_VAR_NAME\"][\"$ENV_NAME\"].id")
           dbtc update-environment-variables \
             -p "${{ matrix.project_id }}" \
-            -d '{"project_id": '"${{ matrix.project_id }}"',"env_vars": {'"$env_var_id"'": "'"$GIT_SHA"'","ids":['"$env_var_id"'],"name":"'"$ENV_VAR_NAME"'"}}'
+            -d '{"project_id": '"${{ matrix.project_id }}"',"env_vars": {"'"$env_var_id"'": "'"$GIT_SHA"'","ids":['"$env_var_id"'],"name":"'"$ENV_VAR_NAME"'"}}'
 
       - name: Trigger CI Job
         run: |
